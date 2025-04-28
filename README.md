@@ -68,3 +68,68 @@ Semantic re-ranking retrieval	✅
 Metadata-based filtering	✅
 Streamlit UI	✅
 Source hyperlinks in answers	✅
+
+-------------------------------------------------------------------------------------
+CAG : 
+Cache Embeddings to Disk (Avoid Recomputing)
+✅ Problem:
+-Embedding millions of docs is slow.
+-You don't want to recompute every restart!
+
+✅ Solution:
+Save embeddings + metadata locally (e.g., .pkl or .parquet files).
+------------------------------------------------------------------------------------
+Hybrid Search (Semantic + Keyword)
+✅ Problem:
+Semantic search alone can miss important keywords.
+E.g., you ask: "Python GIL issues" — semantic match is OK, but "GIL" keyword is critical.
+
+✅ Solution:
+Combine semantic similarity + keyword search.
+
+-------------------------------------------------------------------------------------------
+Expose as a FastAPI Server (RAG API Service)
+✅ Problem:
+Streamlit is nice for UI but not for backend serving.
+We need a real API to plug into apps, bots, workflows.
+
+✅ Solution:
+Build a lightweight FastAPI app.
+
+-------------------------------------------------------------------------------------------
+Run api :
+uvicorn app.rag_api:app --reload --host 0.0.0.0 --port 8000
+-------------------------------------------------------------------------------------------
+Example cURL Call:
+curl -X POST "http://localhost:8000/ask" -H "Content-Type: application/json" -d '{"query":"What is the Python GIL?"}'
+---------------------------------------------------------------------------------------------
+
+[Confluence] + [GitHub] + [Local]
+        ↓
+ [Document Chunking + Cleaning]
+        ↓
+   [Embedding Cache Layer]
+        ↓
+ [ChromaDB / FAISS Vector DB]
+        ↓
+     [Hybrid Retriever]
+        ↓
+       [Prompt Templates]
+        ↓
+       [LLM Model]
+        ↓
+  [FastAPI Server for RAG API]
+
+---------------------------------------------------------------------------------------------
+
+our Complete RAG-as-a-Service has:
+
+Data loaders (Confluence, GitHub, Local)	✅
+Chunking long docs	✅
+Embedding caching	✅
+Hybrid retrieval (semantic + keyword)	✅
+Hyperlinking sources	✅
+Re-ranking documents	✅
+Modular design (easy swap LLMs, DBs)	✅
+Streamlit frontend (optional)	✅
+FastAPI backend server (RAG API)	✅

@@ -19,7 +19,7 @@ def main():
     llm = get_llm(model_choice="huggingface", model_path="gpt2")
 
     prompt_template = generate_prompt_template(model_choice="huggingface")
-    
+
     
     st.title("📚 RAG - Question Answering Bot")
     query = st.text_input("Ask a question:")
@@ -28,6 +28,23 @@ def main():
         retrieved_docs = retrieve_relevant_docs(query, embed_model, db, db_type="chromadb")
         answer = generate_answer(query, retrieved_docs, llm, prompt_template)
         st.markdown(answer)
+
+    #Cache manager : furture try to do only once
+    # from rag_pipeline.cache_manager import save_embeddings, load_embeddings
+
+    # docs, embeddings = load_embeddings()
+
+    # if docs is None:
+    #     print("Embedding fresh documents...")
+    #     docs = extract_data_from_sources(...)
+    #     contents = [doc["content"] for doc in docs]
+    #     embeddings = embed_model.encode(contents)
+    #     save_embeddings(docs, embeddings)
+    # else:
+    #     print("Loaded embeddings from cache!")
+
+    # setup_vector_db(docs, embeddings)
+
 
 if __name__ == "__main__":
     main()
