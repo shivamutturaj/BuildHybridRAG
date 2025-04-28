@@ -13,9 +13,13 @@ def main():
     #documents = confluence_docs + github_docs
     documents = extract_data_from_sources(confluence_args=None, github_args=None, local_folder=None)
     embed_model = get_embedding_model()
+
     db = setup_vector_db(documents, embed_model, db_type="chromadb")
+
     llm = get_llm(model_choice="huggingface", model_path="gpt2")
+
     prompt_template = generate_prompt_template(model_choice="huggingface")
+    
     
     st.title("📚 RAG - Question Answering Bot")
     query = st.text_input("Ask a question:")

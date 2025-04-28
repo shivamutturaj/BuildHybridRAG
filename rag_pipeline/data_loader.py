@@ -17,6 +17,7 @@ import requests
 import os
 from requests.auth import HTTPBasicAuth
 from github import Github
+from rag_pipeline.chunker import split_into_chunks
 
 def extract_data_from_confluence(confluence_base_url, space_key, username, api_token):
     documents = []
@@ -49,11 +50,11 @@ def extract_data_from_confluence(confluence_base_url, space_key, username, api_t
 
     return documents
 
-from bs4 import BeautifulSoup
+# from bs4 import BeautifulSoup
 
-def html_to_text(html_content):
-    soup = BeautifulSoup(html_content, "html.parser")
-    return soup.get_text(separator="\n")
+# def html_to_text(html_content):
+#     soup = BeautifulSoup(html_content, "html.parser")
+#     return soup.get_text(separator="\n")
 
 def extract_data_from_github_repo(repo_url, github_token):
     documents = []
@@ -79,27 +80,48 @@ def extract_data_from_github_repo(repo_url, github_token):
 
     return documents
 
+'''
+Each large doc becomes many small embeddings
+Retrieval is faster + more accurate
+No "overflow" errors on LLM context
+'''
+
 def extract_data_from_sources(confluence_args=None, github_args=None, local_folder=None):
     documents = []
 
     if confluence_args:
         confluence_docs = extract_data_from_confluence(**confluence_args)
-        documents.extend(confluence_docs)
+        for doc in confluence_docs:
+            chunks = split_into_chunks(doc["content"])
+            for idx, chunk in enumerate(chunks):
+                documents.append({
+                    "content": chunk,
+                    "source": doc["source"],
+                    "title": f"{doc['title']} (chunk {idx})"
+                })
 
     if github_args:
         github_docs = extract_data_from_github_repo(**github_args)
-        documents.extend(github_docs)
+        for doc in github_docs:
+            chunks = split_into_chunks(doc["content"])
+            for idx, chunk in enumerate(chunks):
+                documents.append({
+                    "content": chunk,
+                    "source": doc["source"],
+                    "title": f"{doc['title']} (chunk {idx})"
+                })
 
     if local_folder:
-        local_docs = []
         for file in os.listdir(local_folder):
             if file.endswith(".md") or file.endswith(".txt"):
                 with open(os.path.join(local_folder, file), "r") as f:
-                    local_docs.append({
-                        "content": f.read(),
-                        "source": f"file://{local_folder}/{file}",
-                        "title": file
-                    })
-        documents.extend(local_docs)
+                    content = f.read()
+                    chunks = split_into_chunks(content)
+                    for idx, chunk in enumerate(chunks):
+                        documents.append({
+                            "content": chunk,
+                            "source": f"file://{local_folder}/{file}",
+                            "title": f"{file} (chunk {idx})"
+                        })
 
     return documents
