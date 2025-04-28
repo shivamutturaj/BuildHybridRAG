@@ -1,0 +1,9 @@
+streamlit
+sentence-transformers
+chromadb
+faiss-cpu
+llama-index
+langchain
+openai
+torch
+transformers
