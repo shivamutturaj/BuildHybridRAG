@@ -1,0 +1,6 @@
+CONFLUENCE_URL = "https://your_confluence"
+GIT_REPO_PATH = "./git_repo"
+EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
+VECTOR_DB_TYPE = "chromadb"
+LLM_MODEL_CHOICE = "huggingface"
+LLM_MODEL_PATH = "gpt2"
