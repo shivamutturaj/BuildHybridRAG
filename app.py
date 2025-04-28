@@ -8,7 +8,10 @@ from rag_pipeline.generator import generate_answer
 import streamlit as st
 
 def main():
-    documents = extract_data_from_sources("https://dummy_confluence", "./git_repo")
+    # confluence_docs = extract_data_from_confluence(confluence_base_url="https://yourcompany.atlassian.net",space_key="DOCS",username="your_email@domain.com",api_token="your_confluence_api_token")
+    # github_docs = extract_data_from_github_repo(repo_url="https://github.com/yourorg/yourrepo",github_token="your_github_token")
+    #documents = confluence_docs + github_docs
+    documents = extract_data_from_sources(confluence_args=None, github_args=None, local_folder=None)
     embed_model = get_embedding_model()
     db = setup_vector_db(documents, embed_model, db_type="chromadb")
     llm = get_llm(model_choice="huggingface", model_path="gpt2")

@@ -15,3 +15,10 @@ rag_project/
 ├── requirements.txt
 ├── README.md                # (optional: explain usage)
 └── config.py                # (optional: configs for models, db, etc.)
+
+Data loader:
+ -Crawl full Confluence spaces | ✅
+ -Crawl full GitHub repos | ✅
+ -Local folder support | ✅
+ -Full-source hyperlinks in answers | ✅
+ -Clean text parsing | ✅

@@ -6,30 +6,100 @@ When you load documents, you must attach metadata — such as:
 This metadata travels with the document through:
     -embedding ➔ storage ➔ retrieval ➔ final answer
     -so that when generating the answer, you can hyperlink back to the real source.
+
+This function automatically:
+    -Fetches up to 1000s of pages from a Space
+    -Retrieves full page HTML content (or you can convert it to plain text easily)
+    -Links every page to its real Confluence URL
 '''
 
-
+import requests
 import os
+from requests.auth import HTTPBasicAuth
+from github import Github
 
-import os
+def extract_data_from_confluence(confluence_base_url, space_key, username, api_token):
+    documents = []
+    url = f"{confluence_base_url}/wiki/rest/api/content?spaceKey={space_key}&expand=body.storage&limit=100"
 
-def extract_data_from_sources(confluence_url: str, git_repo_path: str):
+    auth = HTTPBasicAuth(username, api_token)
+    headers = {"Accept": "application/json"}
+
+    while url:
+        response = requests.get(url, headers=headers, auth=auth)
+        if response.status_code != 200:
+            raise Exception(f"Failed to fetch Confluence data: {response.text}")
+
+        data = response.json()
+        for page in data.get("results", []):
+            content = page["body"]["storage"]["value"]
+            title = page["title"]
+            page_url = f"{confluence_base_url}/wiki{page['_links']['webui']}"
+            documents.append({
+                "content": content,
+                "source": page_url,
+                "title": title
+            })
+
+        # Pagination
+        if "_links" in data and "next" in data["_links"]:
+            url = confluence_base_url + "/wiki" + data["_links"]["next"]
+        else:
+            url = None
+
+    return documents
+
+from bs4 import BeautifulSoup
+
+def html_to_text(html_content):
+    soup = BeautifulSoup(html_content, "html.parser")
+    return soup.get_text(separator="\n")
+
+def extract_data_from_github_repo(repo_url, github_token):
     documents = []
     
-    # Mock Confluence data with real URL
-    documents.append({
-        "content": f"Content from Confluence page: {confluence_url}",
-        "source": confluence_url
-    })
+    repo_name = repo_url.replace("https://github.com/", "").strip("/")
+    g = Github(github_token)
+    repo = g.get_repo(repo_name)
 
-    # Read Git files with path as source
-    for file in os.listdir(git_repo_path):
-        if file.endswith(".md") or file.endswith(".txt"):
-            filepath = os.path.join(git_repo_path, file)
-            with open(filepath, "r") as f:
+    contents = repo.get_contents("")
+    while contents:
+        file_content = contents.pop(0)
+        if file_content.type == "dir":
+            contents.extend(repo.get_contents(file_content.path))
+        else:
+            if file_content.path.endswith((".md", ".txt", ".py")):  # Choose file types
+                content = file_content.decoded_content.decode("utf-8")
+                file_link = f"https://github.com/{repo_name}/blob/main/{file_content.path}"
                 documents.append({
-                    "content": f.read(),
-                    "source": f"file://{filepath}"  # Local file link or GitHub raw link
+                    "content": content,
+                    "source": file_link,
+                    "title": file_content.path
                 })
-    
+
+    return documents
+
+def extract_data_from_sources(confluence_args=None, github_args=None, local_folder=None):
+    documents = []
+
+    if confluence_args:
+        confluence_docs = extract_data_from_confluence(**confluence_args)
+        documents.extend(confluence_docs)
+
+    if github_args:
+        github_docs = extract_data_from_github_repo(**github_args)
+        documents.extend(github_docs)
+
+    if local_folder:
+        local_docs = []
+        for file in os.listdir(local_folder):
+            if file.endswith(".md") or file.endswith(".txt"):
+                with open(os.path.join(local_folder, file), "r") as f:
+                    local_docs.append({
+                        "content": f.read(),
+                        "source": f"file://{local_folder}/{file}",
+                        "title": file
+                    })
+        documents.extend(local_docs)
+
     return documents
