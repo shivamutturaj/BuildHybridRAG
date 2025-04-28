@@ -133,3 +133,7 @@ Re-ranking documents	✅
 Modular design (easy swap LLMs, DBs)	✅
 Streamlit frontend (optional)	✅
 FastAPI backend server (RAG API)	✅
+
+--------------------------------------------------------------------------------------------------
+
+Dockerize Everything (FastAPI + Vector DB)

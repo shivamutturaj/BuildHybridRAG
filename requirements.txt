@@ -8,3 +8,10 @@ openai
 torch
 transformers
 PyGithub
+fastapi
+uvicorn
+numpy
+pydantic
+pickle5
+huggingface-hub
+
